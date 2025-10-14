@@ -1,0 +1,5 @@
+{
+  "name": "vercel AINSPIRE 영상 자동 캡처",
+  "description": "An AI-powered tool to collect, automatically classify, and organize reference images and video frames. The AI analyzes content to categorize it by composition, action, lighting, and more, creating a searchable library for creative professionals.",
+  "requestFramePermissions": []
+}
