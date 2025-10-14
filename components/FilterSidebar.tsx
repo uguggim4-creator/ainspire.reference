@@ -3,6 +3,9 @@ import type { FilterOptions, ActiveFilters } from '../types';
 import type { Classification } from '../types';
 import { FolderArrowDownIcon } from './icons/FolderArrowDownIcon';
 import { FolderArrowUpIcon } from './icons/FolderArrowUpIcon';
+import { KeyIcon } from './icons/KeyIcon';
+import { useTranslation } from '../i18n/i18n';
+
 
 interface FilterSidebarProps {
   options: FilterOptions;
@@ -12,16 +15,14 @@ interface FilterSidebarProps {
   onExport: () => void;
   captureInterval: number;
   onIntervalChange: React.Dispatch<React.SetStateAction<number>>;
+  onChangeApiKey: () => void;
 }
 
 const CATEGORY_ORDER = ["composition", "action", "lighting", "color", "setting"] as const;
 
-const formatCategoryName = (name: string) => {
-    return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
-export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFilters, onFilterChange, onImport, onExport, captureInterval, onIntervalChange }) => {
+export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFilters, onFilterChange, onImport, onExport, captureInterval, onIntervalChange, onChangeApiKey }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t, language, setLanguage } = useTranslation();
 
   const handleImportClick = () => {
       fileInputRef.current?.click();
@@ -60,20 +61,20 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFil
       <div className="flex-1 overflow-y-auto pr-2 -mr-2">
         <div className="mb-10">
             <h1 className="text-2xl font-bold text-amber-400">
-                AINSPIRE
+                {t('sidebar.title')}
             </h1>
-            <p className="text-xs text-gray-400">레퍼런스 수집</p>
+            <p className="text-xs text-gray-400">{t('sidebar.subtitle')}</p>
         </div>
         
         <div className="flex justify-between items-center mb-4">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Filters</h2>
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{t('sidebar.filters')}</h2>
             {hasOptions && (
                 <button
                     onClick={() => onFilterChange({})}
                     className="text-xs text-gray-400 hover:text-amber-400 transition-colors focus:outline-none"
                     aria-label="Reset all filters"
                 >
-                    Reset
+                    {t('sidebar.reset')}
                 </button>
             )}
         </div>
@@ -83,7 +84,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFil
            {CATEGORY_ORDER.map(category => (
              options[category] && (
                <div key={category}>
-                 <h3 className="font-semibold text-gray-400 mb-3">{formatCategoryName(category)}</h3>
+                 <h3 className="font-semibold text-gray-400 mb-3">{t(`categories.${category}`)}</h3>
                  <div className="flex flex-col space-y-1">
                   <button
                        onClick={() => handleFilter(category, null)}
@@ -93,7 +94,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFil
                            : 'text-gray-300 hover:bg-gray-800 pl-4'
                        }`}
                    >
-                       All
+                       {t('sidebar.all')}
                    </button>
                    {options[category]?.map(value => (
                      <button
@@ -114,14 +115,31 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFil
            ))}
          </div>
         ) : (
-          <p className="text-gray-500 text-sm">Upload content to see available filters.</p>
+          <p className="text-gray-500 text-sm">{t('sidebar.noFilters')}</p>
         )}
       </div>
       <div className="flex-shrink-0 pt-6">
         <div className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Settings</h2>
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">{t('sidebar.language')}</h2>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setLanguage('en')}
+                className={`w-full font-semibold py-2 rounded-md transition-colors ${language === 'en' ? 'bg-amber-500 text-gray-900' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLanguage('ko')}
+                className={`w-full font-semibold py-2 rounded-md transition-colors ${language === 'ko' ? 'bg-amber-500 text-gray-900' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}
+              >
+                KO
+              </button>
+            </div>
+        </div>
+        <div className="mb-6">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">{t('sidebar.settings')}</h2>
             <div className="space-y-2">
-                <label htmlFor="interval-input" className="text-sm text-gray-300 block">Capture Interval (sec)</label>
+                <label htmlFor="interval-input" className="text-sm text-gray-300 block">{t('sidebar.captureInterval')}</label>
                 <input
                     id="interval-input"
                     type="number"
@@ -133,7 +151,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFil
                 />
             </div>
         </div>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Manage</h2>
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">{t('sidebar.manage')}</h2>
         <input
             type="file"
             ref={fileInputRef}
@@ -147,14 +165,21 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFil
                 className="w-full flex items-center space-x-3 text-gray-300 hover:bg-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200"
             >
                 <FolderArrowUpIcon className="w-5 h-5" />
-                <span>Import</span>
+                <span>{t('sidebar.import')}</span>
             </button>
             <button
                 onClick={onExport}
                 className="w-full flex items-center space-x-3 text-gray-300 hover:bg-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200"
             >
                 <FolderArrowDownIcon className="w-5 h-5" />
-                <span>Export</span>
+                <span>{t('sidebar.export')}</span>
+            </button>
+            <button
+                onClick={onChangeApiKey}
+                className="w-full flex items-center space-x-3 text-gray-300 hover:bg-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200"
+            >
+                <KeyIcon className="w-5 h-5" />
+                <span>{t('sidebar.changeApiKey')}</span>
             </button>
         </div>
       </div>

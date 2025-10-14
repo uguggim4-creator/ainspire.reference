@@ -7,8 +7,10 @@ export const useClassificationQueue = () => {
     const [classifiedImages, setClassifiedImages] = useState<ReferenceImage[]>([]);
     const [isClassifying, setIsClassifying] = useState<boolean>(false);
     const [currentClassification, setCurrentClassification] = useState<ExtractedFrame | null>(null);
+    const [apiError, setApiError] = useState<string | null>(null);
 
     const addFramesToQueue = useCallback((frames: ExtractedFrame[]) => {
+        setApiError(null); // Clear previous errors when new frames are added
         setQueue(prev => [...prev, ...frames]);
     }, []);
 
@@ -35,10 +37,17 @@ export const useClassificationQueue = () => {
                     };
                     setClassifiedImages(prev => [...prev, newImage]);
                 }
+                 // Successfully processed, remove from queue
+                setQueue(prev => prev.slice(1));
+
             } catch (error) {
                 console.error("Failed to process frame:", error);
+                if (error instanceof Error && error.message.includes("Invalid API Key")) {
+                    setApiError(error.message);
+                    // Stop the queue on API error
+                    setQueue([]);
+                }
             } finally {
-                setQueue(prev => prev.slice(1));
                 setCurrentClassification(null);
                 setIsClassifying(false);
             }
@@ -55,5 +64,6 @@ export const useClassificationQueue = () => {
         queueSize: queue.length,
         currentClassification,
         setClassifiedImages,
+        apiError,
     };
 };

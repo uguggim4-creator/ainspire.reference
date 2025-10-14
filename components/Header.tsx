@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../i18n/i18n';
 
 interface HeaderProps {
     searchQuery: string;
@@ -7,13 +8,15 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onAddVideoClick }) => {
+    const { t } = useTranslation();
+
     return (
         <header className="p-4 md:p-6 lg:p-8 sticky top-0 bg-gray-900 z-10">
             <div className="flex items-center gap-4">
                 <div className="relative flex-grow">
                     <input 
                         type="search" 
-                        placeholder="Search references by source or classification..."
+                        placeholder={t('header.searchPlaceholder')}
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
                         className="w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-4 pl-10 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -26,7 +29,7 @@ export const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onA
                     onClick={onAddVideoClick}
                     className="bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-6 rounded-md transition-colors duration-300 whitespace-nowrap"
                 >
-                    Add Video
+                    {t('header.addVideo')}
                 </button>
             </div>
         </header>

@@ -1,12 +1,16 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Classification } from '../types';
 
-if (!process.env.API_KEY) {
-    console.error("API_KEY environment variable not set.");
-}
+let ai: GoogleGenAI | null = null;
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+export const initializeGeminiClient = (apiKey: string) => {
+    if (!apiKey) {
+        console.error("API key is missing for Gemini client initialization.");
+        ai = null;
+        return;
+    }
+    ai = new GoogleGenAI({ apiKey });
+};
 
 const classificationSchema = {
     type: Type.OBJECT,
@@ -30,6 +34,10 @@ Categories:
 Return the result as a JSON object adhering to the provided schema.`;
 
 export const classifyImage = async (base64Image: string): Promise<Classification | null> => {
+    if (!ai) {
+        throw new Error("Gemini client not initialized. Please set your API key.");
+    }
+
     try {
         const imagePart = {
             inlineData: {
@@ -57,6 +65,9 @@ export const classifyImage = async (base64Image: string): Promise<Classification
 
     } catch (error) {
         console.error("Error classifying image with Gemini:", error);
+        if (error instanceof Error && (error.message.includes('API key not valid') || error.message.includes('API key is invalid'))) {
+             throw new Error("Invalid API Key. Please check your key and try again.");
+        }
         return null;
     }
 };

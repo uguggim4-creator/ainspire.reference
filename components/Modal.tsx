@@ -1,18 +1,16 @@
 import React, { useEffect } from 'react';
 import type { ReferenceImage } from '../types';
 import { XCircleIcon } from './icons/XCircleIcon';
+import { useTranslation } from '../i18n/i18n';
 
 interface ModalProps {
   image: ReferenceImage;
   onClose: () => void;
 }
 
-const formatCategoryName = (name: string) => {
-    return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
-
 export const Modal: React.FC<ModalProps> = ({ image, onClose }) => {
+    const { t } = useTranslation();
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -36,16 +34,16 @@ export const Modal: React.FC<ModalProps> = ({ image, onClose }) => {
                     <img src={image.src} alt={image.sourceName} className="max-w-full max-h-[80vh] object-contain rounded-md" />
                 </div>
                 <div className="w-full md:w-64 bg-gray-950 p-6 flex-shrink-0 overflow-y-auto">
-                    <h3 className="text-xl font-bold mb-4 text-white">Details</h3>
+                    <h3 className="text-xl font-bold mb-4 text-white">{t('modal.details')}</h3>
                     <div className="space-y-3">
                         {Object.entries(image.classifications).map(([key, value]) => value && (
                             <div key={key}>
-                                <p className="text-sm font-semibold text-gray-400">{formatCategoryName(key)}</p>
+                                <p className="text-sm font-semibold text-gray-400">{t(`categories.${key}`)}</p>
                                 <p className="text-md text-white">{value}</p>
                             </div>
                         ))}
                         <div>
-                            <p className="text-sm font-semibold text-gray-400">Source</p>
+                            <p className="text-sm font-semibold text-gray-400">{t('modal.source')}</p>
                             <p className="text-md text-white break-words">{image.sourceName}</p>
                         </div>
                     </div>
@@ -54,7 +52,7 @@ export const Modal: React.FC<ModalProps> = ({ image, onClose }) => {
             <button
                 onClick={onClose}
                 className="absolute top-4 right-4 text-white hover:text-amber-400 transition-colors"
-                title="Close"
+                title={t('modal.close')}
             >
                 <XCircleIcon className="w-8 h-8"/>
             </button>

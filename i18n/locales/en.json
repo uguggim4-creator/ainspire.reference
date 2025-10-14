@@ -1,0 +1,60 @@
+{
+  "sidebar": {
+    "title": "AINSPIRE",
+    "subtitle": "Reference Collector",
+    "filters": "Filters",
+    "reset": "Reset",
+    "all": "All",
+    "noFilters": "Upload content to see available filters.",
+    "settings": "Settings",
+    "captureInterval": "Capture Interval (sec)",
+    "manage": "Manage",
+    "import": "Import",
+    "export": "Export",
+    "changeApiKey": "Change API Key",
+    "language": "Language"
+  },
+  "categories": {
+    "composition": "Composition",
+    "action": "Action",
+    "lighting": "Lighting",
+    "color": "Color",
+    "setting": "Setting"
+  },
+  "header": {
+    "searchPlaceholder": "Search references by source or classification...",
+    "addVideo": "Add Video"
+  },
+  "uploader": {
+    "dragDrop": "Drag & drop your video files",
+    "browse": "or click to browse files",
+    "browseButton": "Browse Files",
+    "howItWorksTitle": "How it works",
+    "howItWorksDescription": "This tool extracts key frames from your videos and uses AI to automatically classify them by composition, action, lighting, and more. This helps you quickly build a searchable reference library for your creative projects."
+  },
+  "gallery": {
+    "remove": "Remove"
+  },
+  "modal": {
+    "details": "Details",
+    "source": "Source",
+    "close": "Close"
+  },
+  "apiKeySetup": {
+    "title": "Enter your Gemini API Key to get started.",
+    "placeholder": "Enter your Gemini API Key",
+    "continue": "Continue",
+    "getApiKey": "You can get a free API key from",
+    "storageInfo": "Your API key is stored securely in your browser and is never sent anywhere else."
+  },
+  "status": {
+    "extracting": "Extracting frames from {{videoName}}... ({{queueLength}} more video(s) in queue)",
+    "classifying": "Classifying frame from {{sourceName}} ({{queueSize}} more frame(s) in queue)...",
+    "stop": "Stop"
+  },
+  "alerts": {
+    "invalidApiKey": "Invalid API Key. Please check your key and try again.",
+    "invalidJson": "Invalid JSON file format.",
+    "jsonParseError": "Failed to parse JSON file."
+  }
+}

@@ -7,8 +7,13 @@ import { useVideoProcessor } from './hooks/useVideoProcessor';
 import { useClassificationQueue } from './hooks/useClassificationQueue';
 import type { ReferenceImage, FilterOptions, ActiveFilters } from './types';
 import { Loader } from './components/Loader';
+import { ApiKeySetup } from './components/ApiKeySetup';
+import { initializeGeminiClient } from './services/geminiService';
+import { useTranslation } from './i18n/i18n';
 
 const App: React.FC = () => {
+    const { t } = useTranslation();
+    const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem('gemini-api-key'));
     const [captureInterval, setCaptureInterval] = useState(3);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -27,12 +32,29 @@ const App: React.FC = () => {
         isClassifying, 
         queueSize: classificationQueueSize, 
         currentClassification,
-        setClassifiedImages 
+        setClassifiedImages,
+        apiError
     } = useClassificationQueue();
 
     const [allImages, setAllImages] = useState<ReferenceImage[]>([]);
     const [activeFilters, setActiveFilters] = useState<ActiveFilters>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (apiKey) {
+            initializeGeminiClient(apiKey);
+            localStorage.setItem('gemini-api-key', apiKey);
+        } else {
+            localStorage.removeItem('gemini-api-key');
+        }
+    }, [apiKey]);
+    
+    useEffect(() => {
+        if (apiError) {
+            alert(t('alerts.invalidApiKey'));
+            setApiKey(null);
+        }
+    }, [apiError, t]);
 
     // When frames are extracted, add them to the classification queue
     useEffect(() => {
@@ -141,22 +163,30 @@ const App: React.FC = () => {
             if (Array.isArray(importedImages) && importedImages.every(img => 'id' in img && 'src' in img && 'classifications' in img)) {
                 setClassifiedImages(importedImages);
             } else {
-                alert('Invalid JSON file format.');
+                alert(t('alerts.invalidJson'));
             }
         } catch (error) {
             console.error("Error importing JSON:", error);
-            alert('Failed to parse JSON file.');
+            alert(t('alerts.jsonParseError'));
         }
-    }, [setClassifiedImages]);
+    }, [setClassifiedImages, t]);
+
+    const handleApiKeySubmit = (key: string) => {
+        setApiKey(key);
+    };
+
+    const handleClearApiKey = () => {
+        setApiKey(null);
+    }
 
     const showUploader = allImages.length === 0 && !isExtracting && !isClassifying && videoQueue.length === 0;
 
     const getStatusMessage = () => {
-        if (isExtracting) {
-            return `Extracting frames from ${currentVideo?.name}... (${videoQueue.length} more video(s) in queue)`;
+        if (isExtracting && currentVideo) {
+            return t('status.extracting', { videoName: currentVideo.name, queueLength: videoQueue.length });
         }
-        if (isClassifying) {
-            return `Classifying frame from ${currentClassification?.sourceName} (${classificationQueueSize} more frame(s) in queue)...`;
+        if (isClassifying && currentClassification) {
+            return t('status.classifying', { sourceName: currentClassification.sourceName, queueSize: classificationQueueSize });
         }
         return null;
     }
@@ -179,37 +209,44 @@ const App: React.FC = () => {
                 onExport={handleExport}
                 captureInterval={captureInterval}
                 onIntervalChange={setCaptureInterval}
+                onChangeApiKey={handleClearApiKey}
             />
             <main className="flex-1 flex flex-col overflow-hidden">
-                <Header 
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    onAddVideoClick={handleUploadClick}
-                />
-                <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
-                    {showUploader ? (
-                        <Uploader onFiles={handleFiles} onUploadClick={handleUploadClick} />
-                    ) : (
-                        <>
-                            {getStatusMessage() && (
-                                <div className="flex items-center justify-center space-x-3 bg-gray-800 p-4 rounded-lg mb-6">
-                                    <Loader />
-                                    <p className="text-gray-300">{getStatusMessage()}</p>
-                                    {isExtracting && (
-                                        <button
-                                            onClick={stopProcessing}
-                                            className="bg-red-600 hover:bg-red-700 text-white font-semibold py-1 px-4 rounded-md text-sm transition-colors"
-                                            aria-label="Stop video processing"
-                                        >
-                                            Stop
-                                        </button>
+                {!apiKey ? (
+                    <ApiKeySetup onSubmit={handleApiKeySubmit} />
+                ) : (
+                    <>
+                        <Header 
+                            searchQuery={searchQuery}
+                            onSearchChange={setSearchQuery}
+                            onAddVideoClick={handleUploadClick}
+                        />
+                        <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+                            {showUploader ? (
+                                <Uploader onFiles={handleFiles} onUploadClick={handleUploadClick} />
+                            ) : (
+                                <>
+                                    {getStatusMessage() && (
+                                        <div className="flex items-center justify-center space-x-3 bg-gray-800 p-4 rounded-lg mb-6">
+                                            <Loader />
+                                            <p className="text-gray-300">{getStatusMessage()}</p>
+                                            {isExtracting && (
+                                                <button
+                                                    onClick={stopProcessing}
+                                                    className="bg-red-600 hover:bg-red-700 text-white font-semibold py-1 px-4 rounded-md text-sm transition-colors"
+                                                    aria-label="Stop video processing"
+                                                >
+                                                    {t('status.stop')}
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
-                                </div>
+                                    <Gallery images={filteredImages} onRemove={handleRemoveImage} />
+                                </>
                             )}
-                            <Gallery images={filteredImages} onRemove={handleRemoveImage} />
-                        </>
-                    )}
-                </div>
+                        </div>
+                    </>
+                )}
             </main>
         </div>
     );

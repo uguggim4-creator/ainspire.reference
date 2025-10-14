@@ -1,7 +1,7 @@
-
 import React from 'react';
 import type { ReferenceImage } from '../types';
 import { XCircleIcon } from './icons/XCircleIcon';
+import { useTranslation } from '../i18n/i18n';
 
 interface ImageCardProps {
   image: ReferenceImage;
@@ -9,11 +9,9 @@ interface ImageCardProps {
   onRemove: (id: string) => void;
 }
 
-const formatCategoryName = (name: string) => {
-    return name.charAt(0).toUpperCase() + name.slice(1);
-}
-
 export const ImageCard: React.FC<ImageCardProps> = ({ image, onClick, onRemove }) => {
+  const { t } = useTranslation();
+
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
     onRemove(image.id);
@@ -26,7 +24,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, onClick, onRemove }
         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           {Object.entries(image.classifications).map(([key, value]) => value && (
             <div key={key} className="text-xs">
-              <span className="font-bold text-gray-300">{formatCategoryName(key)}:</span> <span className="text-white">{value}</span>
+              <span className="font-bold text-gray-300">{t(`categories.${key}`)}:</span> <span className="text-white">{value}</span>
             </div>
           ))}
           <p className="text-xs text-gray-400 mt-2 truncate" title={image.sourceName}>{image.sourceName}</p>
@@ -35,7 +33,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, onClick, onRemove }
       <button
         onClick={handleRemove}
         className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-500"
-        title="Remove"
+        title={t('gallery.remove')}
       >
         <XCircleIcon className="w-5 h-5" />
       </button>
