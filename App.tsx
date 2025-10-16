@@ -192,7 +192,7 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="bg-gray-900 text-white h-full rounded-xl shadow-2xl flex overflow-hidden border border-gray-700">
+        <div className="bg-gray-900 text-white h-full rounded-xl shadow-2xl flex overflow-hidden border border-gray-700 animate-pop-in">
             <input
                 type="file"
                 ref={fileInputRef}

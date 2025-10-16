@@ -6,8 +6,12 @@
     <title>AINSPIRE _ 레퍼런스 수집</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* html과 body, #root가 화면 전체 높이를 차지하도록 설정 */
-      html, body, #root {
+      /* html과 body가 화면 전체 높이를 차지하도록 설정 */
+      html, body {
+        height: 100%;
+      }
+
+      #root {
         height: 100%;
       }
 
@@ -17,6 +21,23 @@
         background-size: cover;
         background-position: center;
         background-attachment: fixed; /* 스크롤 시 배경 이미지가 움직이지 않음 */
+        padding: 2rem; /* 앱 주위에 여백을 추가 */
+        box-sizing: border-box; /* 패딩을 크기 계산에 포함 */
+      }
+
+      @keyframes pop-in {
+        from {
+          opacity: 0;
+          transform: translateY(20px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .animate-pop-in {
+        animation: pop-in 0.5s ease-out forwards;
       }
     </style>
     <script>
