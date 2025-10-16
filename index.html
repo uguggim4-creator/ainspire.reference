@@ -6,14 +6,17 @@
     <title>AINSPIRE _ 레퍼런스 수집</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+      /* html과 body, #root가 화면 전체 높이를 차지하도록 설정 */
       html, body, #root {
         height: 100%;
       }
+
+      /* body 태그에 배경 이미지를 적용하고, 스크롤해도 고정되도록 설정 */
       body {
         background-image: url('background.jpg');
         background-size: cover;
         background-position: center;
-        background-attachment: fixed;
+        background-attachment: fixed; /* 스크롤 시 배경 이미지가 움직이지 않음 */
       }
     </style>
     <script>
@@ -34,18 +37,18 @@
         }
       }
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.1.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0"
-  }
-}
-</script>
-</head>
-  <body class="bg-gray-950 p-4 sm:p-6 md:p-8">
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://aistudiocdn.com/react@^19.1.1",
+          "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+          "react/": "https://aistudiocdn.com/react@^19.1.1/",
+          "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0"
+        }
+      }
+    </script>
+  </head>
+  <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
