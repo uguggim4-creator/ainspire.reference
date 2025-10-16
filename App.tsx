@@ -10,6 +10,7 @@ import { Loader } from './components/Loader';
 import { ApiKeySetup } from './components/ApiKeySetup';
 import { initializeGeminiClient } from './services/geminiService';
 import { useTranslation } from './i18n/i18n';
+import JSZip from 'jszip';
 
 const App: React.FC = () => {
     const { t } = useTranslation();
@@ -17,6 +18,8 @@ const App: React.FC = () => {
     const [captureInterval, setCaptureInterval] = useState(3);
     const [searchQuery, setSearchQuery] = useState('');
     const [allImages, setAllImages] = useState<ReferenceImage[]>([]);
+    const [isZipping, setIsZipping] = useState(false);
+    const [sidebarWidth, setSidebarWidth] = useState(256);
 
     const handleClassificationComplete = useCallback((classifiedImage: ReferenceImage) => {
         setAllImages(prevImages =>
@@ -157,6 +160,42 @@ const App: React.FC = () => {
         URL.revokeObjectURL(url);
     }, [allImages]);
 
+    const handleDownloadAllImages = useCallback(async () => {
+        if (filteredImages.length === 0) {
+            alert(t('alerts.noImagesToDownload'));
+            return;
+        }
+
+        setIsZipping(true);
+        try {
+            const zip = new JSZip();
+            
+            for (const image of filteredImages) {
+                const response = await fetch(image.src);
+                const blob = await response.blob();
+                const timestampStr = image.timestamp.toFixed(2).replace('.', '_');
+                const filename = `${image.sourceName.replace(/\.[^/.]+$/, "")}-${timestampStr}.jpg`;
+                zip.file(filename, blob);
+            }
+
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ainspire-collection.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error("Error creating zip file:", error);
+            alert(t('alerts.zipError'));
+        } finally {
+            setIsZipping(false);
+        }
+    }, [filteredImages, t]);
+
     const handleImport = useCallback((jsonString: string) => {
         try {
             const importedImages: ReferenceImage[] = JSON.parse(jsonString);
@@ -210,6 +249,10 @@ const App: React.FC = () => {
                 captureInterval={captureInterval}
                 onIntervalChange={setCaptureInterval}
                 onChangeApiKey={handleClearApiKey}
+                onDownloadAll={handleDownloadAllImages}
+                isZipping={isZipping}
+                width={sidebarWidth}
+                onWidthChange={setSidebarWidth}
             />
             <main className="flex-1 flex flex-col overflow-hidden">
                 {!apiKey ? (

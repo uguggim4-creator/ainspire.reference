@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ReferenceImage } from '../types';
 import { XCircleIcon } from './icons/XCircleIcon';
+import { ArrowDownTrayIcon } from './icons/ArrowDownTrayIcon';
 import { useTranslation } from '../i18n/i18n';
 
 interface ImageCardProps {
@@ -17,6 +18,17 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, onClick, onRemove }
     onRemove(image.id);
   };
 
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const a = document.createElement('a');
+    a.href = image.src;
+    const timestampStr = image.timestamp.toFixed(2).replace('.', '_');
+    a.download = `${image.sourceName.replace(/\.[^/.]+$/, "")}-${timestampStr}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
     <div className="group relative aspect-video overflow-hidden rounded-lg bg-gray-800 cursor-pointer" onClick={onClick}>
       <img src={image.src} alt={image.sourceName} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -30,13 +42,22 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, onClick, onRemove }
           <p className="text-xs text-gray-400 mt-2 truncate" title={image.sourceName}>{image.sourceName}</p>
         </div>
       </div>
-      <button
-        onClick={handleRemove}
-        className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-red-500"
-        title={t('gallery.remove')}
-      >
-        <XCircleIcon className="w-5 h-5" />
-      </button>
+       <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <button
+          onClick={handleDownload}
+          className="text-white bg-black bg-opacity-50 rounded-full w-6 h-6 flex items-center justify-center hover:bg-amber-500"
+          title={t('gallery.download')}
+        >
+          <ArrowDownTrayIcon className="w-5 h-5" />
+        </button>
+        <button
+          onClick={handleRemove}
+          className="text-white bg-black bg-opacity-50 rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-500"
+          title={t('gallery.remove')}
+        >
+          <XCircleIcon className="w-5 h-5" />
+        </button>
+      </div>
     </div>
   );
 };

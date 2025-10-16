@@ -12,7 +12,9 @@
     "import": "Import",
     "export": "Export",
     "changeApiKey": "Change API Key",
-    "language": "Language"
+    "language": "Language",
+    "downloadAllImages": "Download All Images",
+    "downloadingImages": "Zipping..."
   },
   "categories": {
     "composition": "Composition",
@@ -33,12 +35,14 @@
     "howItWorksDescription": "This tool extracts key frames from your videos and uses AI to automatically classify them by composition, action, lighting, and more. This helps you quickly build a searchable reference library for your creative projects."
   },
   "gallery": {
-    "remove": "Remove"
+    "remove": "Remove",
+    "download": "Download"
   },
   "modal": {
     "details": "Details",
     "source": "Source",
-    "close": "Close"
+    "close": "Close",
+    "download": "Download Image"
   },
   "apiKeySetup": {
     "title": "Enter your Gemini API Key to get started.",
@@ -55,6 +59,8 @@
   "alerts": {
     "invalidApiKey": "Invalid API Key. Please check your key and try again.",
     "invalidJson": "Invalid JSON file format.",
-    "jsonParseError": "Failed to parse JSON file."
+    "jsonParseError": "Failed to parse JSON file.",
+    "noImagesToDownload": "There are no images to download.",
+    "zipError": "Failed to create zip file."
   }
 }

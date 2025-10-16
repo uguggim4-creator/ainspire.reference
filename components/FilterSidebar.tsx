@@ -1,10 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback } from 'react';
 import type { FilterOptions, ActiveFilters } from '../types';
 import type { Classification } from '../types';
 import { FolderArrowDownIcon } from './icons/FolderArrowDownIcon';
 import { FolderArrowUpIcon } from './icons/FolderArrowUpIcon';
 import { KeyIcon } from './icons/KeyIcon';
 import { useTranslation } from '../i18n/i18n';
+import { Loader } from './Loader';
 
 
 interface FilterSidebarProps {
@@ -16,11 +17,18 @@ interface FilterSidebarProps {
   captureInterval: number;
   onIntervalChange: React.Dispatch<React.SetStateAction<number>>;
   onChangeApiKey: () => void;
+  onDownloadAll: () => void;
+  isZipping: boolean;
+  width: number;
+  onWidthChange: (newWidth: number) => void;
 }
 
 const CATEGORY_ORDER = ["composition", "action", "lighting", "color", "setting"] as const;
 
-export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFilters, onFilterChange, onImport, onExport, captureInterval, onIntervalChange, onChangeApiKey }) => {
+const MIN_WIDTH = 240;
+const MAX_WIDTH = 600;
+
+export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFilters, onFilterChange, onImport, onExport, captureInterval, onIntervalChange, onChangeApiKey, onDownloadAll, isZipping, width, onWidthChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t, language, setLanguage } = useTranslation();
 
@@ -54,10 +62,35 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFil
     });
   };
 
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const newWidth = moveEvent.clientX;
+      const clampedWidth = Math.max(MIN_WIDTH, Math.min(newWidth, MAX_WIDTH));
+      onWidthChange(clampedWidth);
+    };
+
+    const handleMouseUp = () => {
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }, [onWidthChange]);
+
   const hasOptions = Object.keys(options).length > 0;
 
   return (
-    <aside className="w-64 bg-gray-950 p-6 flex-shrink-0 flex flex-col justify-between h-full sticky top-0">
+    <aside 
+      style={{ width: `${width}px` }}
+      className="bg-gray-950 p-6 flex-shrink-0 flex flex-col justify-between h-full sticky top-0 relative"
+    >
       <div className="flex-1 overflow-y-auto pr-2 -mr-2">
         <div className="mb-10">
             <h1 className="text-2xl font-bold text-amber-400">
@@ -175,6 +208,23 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFil
                 <span>{t('sidebar.export')}</span>
             </button>
             <button
+                onClick={onDownloadAll}
+                disabled={isZipping}
+                className="w-full flex items-center space-x-3 text-gray-300 hover:bg-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                {isZipping ? (
+                    <>
+                        <Loader />
+                        <span>{t('sidebar.downloadingImages')}</span>
+                    </>
+                ) : (
+                    <>
+                        <FolderArrowDownIcon className="w-5 h-5" />
+                        <span>{t('sidebar.downloadAllImages')}</span>
+                    </>
+                )}
+            </button>
+            <button
                 onClick={onChangeApiKey}
                 className="w-full flex items-center space-x-3 text-gray-300 hover:bg-gray-800 font-medium py-2 px-4 rounded-md transition-colors duration-200"
             >
@@ -183,6 +233,12 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ options, activeFil
             </button>
         </div>
       </div>
+      <div
+        role="separator"
+        aria-hidden="true"
+        onMouseDown={handleMouseDown}
+        className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize bg-transparent hover:bg-amber-500/50 transition-colors duration-200"
+      />
     </aside>
   );
 };

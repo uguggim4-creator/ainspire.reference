@@ -15,7 +15,9 @@ const enTranslations = {
     "import": "Import",
     "export": "Export",
     "changeApiKey": "Change API Key",
-    "language": "Language"
+    "language": "Language",
+    "downloadAllImages": "Download All Images",
+    "downloadingImages": "Zipping..."
   },
   "categories": {
     "composition": "Composition",
@@ -36,12 +38,14 @@ const enTranslations = {
     "howItWorksDescription": "This tool extracts key frames from your videos and uses AI to automatically classify them by composition, action, lighting, and more. This helps you quickly build a searchable reference library for your creative projects."
   },
   "gallery": {
-    "remove": "Remove"
+    "remove": "Remove",
+    "download": "Download"
   },
   "modal": {
     "details": "Details",
     "source": "Source",
-    "close": "Close"
+    "close": "Close",
+    "download": "Download Image"
   },
   "apiKeySetup": {
     "title": "Enter your Gemini API Key to get started.",
@@ -58,7 +62,9 @@ const enTranslations = {
   "alerts": {
     "invalidApiKey": "Invalid API Key. Please check your key and try again.",
     "invalidJson": "Invalid JSON file format.",
-    "jsonParseError": "Failed to parse JSON file."
+    "jsonParseError": "Failed to parse JSON file.",
+    "noImagesToDownload": "There are no images to download.",
+    "zipError": "Failed to create zip file."
   }
 };
 
@@ -76,7 +82,9 @@ const koTranslations = {
     "import": "가져오기",
     "export": "내보내기",
     "changeApiKey": "API 키 변경",
-    "language": "언어"
+    "language": "언어",
+    "downloadAllImages": "모든 이미지 다운로드",
+    "downloadingImages": "압축 중..."
   },
   "categories": {
     "composition": "구도",
@@ -97,12 +105,14 @@ const koTranslations = {
     "howItWorksDescription": "이 도구는 비디오에서 주요 프레임을 추출하고 AI를 사용하여 구도, 동작, 조명 등을 기준으로 자동 분류합니다. 이를 통해 창작 프로젝트를 위한 검색 가능한 레퍼런스 라이브러리를 빠르게 구축할 수 있습니다."
   },
   "gallery": {
-    "remove": "제거"
+    "remove": "제거",
+    "download": "다운로드"
   },
   "modal": {
     "details": "세부 정보",
     "source": "소스",
-    "close": "닫기"
+    "close": "닫기",
+    "download": "이미지 다운로드"
   },
   "apiKeySetup": {
     "title": "시작하려면 Gemini API 키를 입력하세요.",
@@ -119,7 +129,9 @@ const koTranslations = {
   "alerts": {
     "invalidApiKey": "잘못된 API 키입니다. 키를 확인하고 다시 시도하세요.",
     "invalidJson": "잘못된 JSON 파일 형식입니다.",
-    "jsonParseError": "JSON 파일 분석에 실패했습니다."
+    "jsonParseError": "JSON 파일 분석에 실패했습니다.",
+    "noImagesToDownload": "다운로드할 이미지가 없습니다.",
+    "zipError": "ZIP 파일 생성에 실패했습니다."
   }
 };
 
