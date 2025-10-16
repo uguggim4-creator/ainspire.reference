@@ -5,7 +5,7 @@ import { Header } from './components/Header';
 import { Uploader } from './components/Uploader';
 import { useVideoProcessor } from './hooks/useVideoProcessor';
 import { useClassificationQueue } from './hooks/useClassificationQueue';
-import type { ReferenceImage, FilterOptions, ActiveFilters } from './types';
+import type { ReferenceImage, FilterOptions, ActiveFilters, ExtractedFrame } from './types';
 import { Loader } from './components/Loader';
 import { ApiKeySetup } from './components/ApiKeySetup';
 import { initializeGeminiClient } from './services/geminiService';
@@ -16,27 +16,44 @@ const App: React.FC = () => {
     const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem('gemini-api-key'));
     const [captureInterval, setCaptureInterval] = useState(3);
     const [searchQuery, setSearchQuery] = useState('');
+    const [allImages, setAllImages] = useState<ReferenceImage[]>([]);
 
-    const { 
-        extractedFrames, 
-        addVideosToQueue, 
-        isProcessing: isExtracting, 
-        currentVideo, 
+    const handleClassificationComplete = useCallback((classifiedImage: ReferenceImage) => {
+        setAllImages(prevImages =>
+            prevImages.map(img =>
+                img.id === classifiedImage.id ? classifiedImage : img
+            )
+        );
+    }, []);
+
+    const {
+        addClassificationJobs,
+        isClassifying,
+        queueSize: classificationQueueSize,
+        currentClassification,
+        apiError
+    } = useClassificationQueue(handleClassificationComplete);
+
+    const handleFrameExtracted = useCallback((frame: ExtractedFrame) => {
+        const newImage: ReferenceImage = {
+            id: crypto.randomUUID(),
+            src: frame.data,
+            classifications: {}, // Initially empty
+            timestamp: frame.timestamp,
+            sourceName: frame.sourceName,
+        };
+        setAllImages(prev => [...prev, newImage]);
+        addClassificationJobs([{ id: newImage.id, src: newImage.src, timestamp: newImage.timestamp, sourceName: newImage.sourceName }]);
+    }, [addClassificationJobs]);
+
+    const {
+        addVideosToQueue,
+        isProcessing: isExtracting,
+        currentVideo,
         processingQueue: videoQueue,
         stopProcessing
-    } = useVideoProcessor(captureInterval);
-    
-    const { 
-        addFramesToQueue, 
-        classifiedImages, 
-        isClassifying, 
-        queueSize: classificationQueueSize, 
-        currentClassification,
-        setClassifiedImages,
-        apiError
-    } = useClassificationQueue();
+    } = useVideoProcessor(captureInterval, handleFrameExtracted);
 
-    const [allImages, setAllImages] = useState<ReferenceImage[]>([]);
     const [activeFilters, setActiveFilters] = useState<ActiveFilters>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,7 +65,7 @@ const App: React.FC = () => {
             localStorage.removeItem('gemini-api-key');
         }
     }, [apiKey]);
-    
+
     useEffect(() => {
         if (apiError) {
             alert(t('alerts.invalidApiKey'));
@@ -56,26 +73,13 @@ const App: React.FC = () => {
         }
     }, [apiError, t]);
 
-    // When frames are extracted, add them to the classification queue
-    useEffect(() => {
-        if (extractedFrames.length > 0) {
-            addFramesToQueue(extractedFrames);
-        }
-    }, [extractedFrames, addFramesToQueue]);
-
-    // The state from the classification queue hook is the source of truth.
-    // `allImages` in this component is a synchronized copy for filtering and rendering.
-    useEffect(() => {
-        setAllImages(classifiedImages);
-    }, [classifiedImages]);
-
     const handleFiles = (files: FileList) => {
         const videoFiles = Array.from(files).filter(file => file.type.startsWith('video/'));
         if (videoFiles.length > 0) {
             addVideosToQueue(videoFiles);
         }
     };
-    
+
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
@@ -87,15 +91,13 @@ const App: React.FC = () => {
     };
 
     const handleRemoveImage = (id: string) => {
-        setClassifiedImages(prev => prev.filter(image => image.id !== id));
+        setAllImages(prev => prev.filter(image => image.id !== id));
     };
 
     const filterOptions: FilterOptions = useMemo(() => {
         const options: FilterOptions = {};
         allImages.forEach(image => {
             for (const [key, value] of Object.entries(image.classifications)) {
-                // FIX: Add a type guard to ensure the classification value is a string.
-                // The value can be of type `unknown` due to JSON parsing, causing errors on lines 79-80.
                 if (typeof value === 'string' && value) {
                     const category = key as keyof FilterOptions;
                     if (!options[category]) {
@@ -133,8 +135,6 @@ const App: React.FC = () => {
                     return true;
                 }
                 // Check against all classification values
-                // FIX: Add a type guard to ensure the classification value is a string before calling string methods.
-                // The value can be of type `unknown` due to JSON parsing, which caused an error on this line.
                 return Object.values(image.classifications).some(
                     value => typeof value === 'string' && value.toLowerCase().includes(lowercasedQuery)
                 );
@@ -161,7 +161,7 @@ const App: React.FC = () => {
         try {
             const importedImages: ReferenceImage[] = JSON.parse(jsonString);
             if (Array.isArray(importedImages) && importedImages.every(img => 'id' in img && 'src' in img && 'classifications' in img)) {
-                setClassifiedImages(importedImages);
+                setAllImages(importedImages);
             } else {
                 alert(t('alerts.invalidJson'));
             }
@@ -169,7 +169,7 @@ const App: React.FC = () => {
             console.error("Error importing JSON:", error);
             alert(t('alerts.jsonParseError'));
         }
-    }, [setClassifiedImages, t]);
+    }, [t]);
 
     const handleApiKeySubmit = (key: string) => {
         setApiKey(key);
@@ -193,16 +193,16 @@ const App: React.FC = () => {
 
     return (
         <div className="bg-gray-900 text-white h-full rounded-xl shadow-2xl flex overflow-hidden border border-gray-700">
-            <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
                 multiple
                 accept="video/*"
             />
-            <FilterSidebar 
-                options={filterOptions} 
+            <FilterSidebar
+                options={filterOptions}
                 activeFilters={activeFilters}
                 onFilterChange={setActiveFilters}
                 onImport={handleImport}
@@ -216,7 +216,7 @@ const App: React.FC = () => {
                     <ApiKeySetup onSubmit={handleApiKeySubmit} />
                 ) : (
                     <>
-                        <Header 
+                        <Header
                             searchQuery={searchQuery}
                             onSearchChange={setSearchQuery}
                             onAddVideoClick={handleUploadClick}

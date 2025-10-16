@@ -1,34 +1,36 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { ExtractedFrame } from '../types';
 
-export const useVideoProcessor = (frameCaptureIntervalS: number) => {
-    const [extractedFrames, setExtractedFrames] = useState<ExtractedFrame[]>([]);
+export const useVideoProcessor = (
+    frameCaptureIntervalS: number,
+    onFrameExtracted: (frame: ExtractedFrame) => void
+) => {
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     const [processingQueue, setProcessingQueue] = useState<File[]>([]);
     const [currentVideo, setCurrentVideo] = useState<File | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const currentVideoUrlRef = useRef<string | null>(null);
+    const stopFlag = useRef(false);
 
     const addVideosToQueue = useCallback((videoFiles: File[]) => {
         setProcessingQueue(prev => [...prev, ...videoFiles]);
     }, []);
 
     const stopProcessing = useCallback(() => {
-        if (videoRef.current && currentVideoUrlRef.current) {
-            URL.revokeObjectURL(currentVideoUrlRef.current);
-            videoRef.current.removeAttribute('src'); // Use removeAttribute
+        stopFlag.current = true;
+        if (videoRef.current) {
+            // Remove src to trigger the 'error' event in processVideoInternal,
+            // which handles the cleanup.
+            videoRef.current.removeAttribute('src');
             videoRef.current.load();
-            videoRef.current = null;
-            currentVideoUrlRef.current = null;
         }
         setProcessingQueue([]);
         setIsProcessing(false);
         setCurrentVideo(null);
-        setExtractedFrames([]);
     }, []);
-
+    
     const processVideoInternal = useCallback(async (videoFile: File) => {
-        return new Promise<ExtractedFrame[]>((resolve) => {
+        return new Promise<void>((resolve) => {
             const video = document.createElement('video');
             videoRef.current = video;
             const canvas = document.createElement('canvas');
@@ -39,10 +41,9 @@ export const useVideoProcessor = (frameCaptureIntervalS: number) => {
             video.muted = true;
             video.playsInline = true;
 
-            const frames: ExtractedFrame[] = [];
             let captureFrameHandler: (() => void) | null = null;
 
-            const cleanupAndResolve = (resultFrames: ExtractedFrame[]) => {
+            const cleanupAndResolve = () => {
                 if (captureFrameHandler) {
                     video.removeEventListener('seeked', captureFrameHandler);
                 }
@@ -51,7 +52,7 @@ export const useVideoProcessor = (frameCaptureIntervalS: number) => {
                 URL.revokeObjectURL(videoUrl);
                 if (videoRef.current === video) videoRef.current = null;
                 if (currentVideoUrlRef.current === videoUrl) currentVideoUrlRef.current = null;
-                resolve(resultFrames);
+                resolve();
             };
 
             const onMetadataLoaded = () => {
@@ -62,16 +63,20 @@ export const useVideoProcessor = (frameCaptureIntervalS: number) => {
                 const duration = video.duration;
 
                 captureFrameHandler = () => {
-                    if (!context) return;
+                    if (stopFlag.current || !context) {
+                        cleanupAndResolve();
+                        return;
+                    }
                     context.drawImage(video, 0, 0, canvas.width, canvas.height);
                     const dataUrl = canvas.toDataURL('image/jpeg');
-                    frames.push({ data: dataUrl, timestamp: video.currentTime, sourceName: videoFile.name });
+                    
+                    onFrameExtracted({ data: dataUrl, timestamp: video.currentTime, sourceName: videoFile.name });
 
                     currentTime += frameCaptureIntervalS;
                     if (currentTime < duration) {
                         video.currentTime = currentTime;
                     } else {
-                        cleanupAndResolve(frames);
+                        cleanupAndResolve();
                     }
                 };
 
@@ -81,7 +86,7 @@ export const useVideoProcessor = (frameCaptureIntervalS: number) => {
 
             const onError = () => {
                 console.error("Error processing video or processing was stopped:", videoFile.name);
-                cleanupAndResolve([]);
+                cleanupAndResolve();
             };
 
             video.addEventListener('loadedmetadata', onMetadataLoaded);
@@ -90,7 +95,7 @@ export const useVideoProcessor = (frameCaptureIntervalS: number) => {
             video.src = videoUrl;
             video.load();
         });
-    }, [frameCaptureIntervalS]);
+    }, [frameCaptureIntervalS, onFrameExtracted]);
 
     useEffect(() => {
         if (isProcessing || processingQueue.length === 0) {
@@ -99,15 +104,14 @@ export const useVideoProcessor = (frameCaptureIntervalS: number) => {
 
         const nextVideo = processingQueue[0];
         
+        stopFlag.current = false;
         setCurrentVideo(nextVideo);
         setIsProcessing(true);
-        setExtractedFrames([]);
         
-        processVideoInternal(nextVideo).then(frames => {
-            // If stopProcessing was called, isProcessing will be false.
-            // This check prevents state updates after cancellation.
-            if (isProcessing) {
-                setExtractedFrames(frames);
+        processVideoInternal(nextVideo).then(() => {
+            // Check stopFlag because processing might have been stopped
+            // while the promise was running.
+            if (!stopFlag.current) {
                 setProcessingQueue(prev => prev.slice(1));
                 setIsProcessing(false);
                 setCurrentVideo(null);
@@ -116,8 +120,16 @@ export const useVideoProcessor = (frameCaptureIntervalS: number) => {
 
     }, [isProcessing, processingQueue, processVideoInternal]);
 
+    // Cleanup effect for when the component unmounts
+    useEffect(() => {
+        return () => {
+            if (currentVideoUrlRef.current) {
+                URL.revokeObjectURL(currentVideoUrlRef.current);
+            }
+        };
+    }, []);
+
     return { 
-        extractedFrames, 
         addVideosToQueue, 
         isProcessing,
         currentVideo,

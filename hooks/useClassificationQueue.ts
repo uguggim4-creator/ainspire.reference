@@ -1,17 +1,23 @@
 import { useState, useCallback, useEffect } from 'react';
 import { classifyImage } from '../services/geminiService';
-import type { ExtractedFrame, ReferenceImage } from '../types';
+import type { ReferenceImage } from '../types';
 
-export const useClassificationQueue = () => {
-    const [queue, setQueue] = useState<ExtractedFrame[]>([]);
-    const [classifiedImages, setClassifiedImages] = useState<ReferenceImage[]>([]);
+interface ClassificationJob {
+    id: string;
+    src: string;
+    timestamp: number;
+    sourceName: string;
+}
+
+export const useClassificationQueue = (onClassificationComplete: (image: ReferenceImage) => void) => {
+    const [queue, setQueue] = useState<ClassificationJob[]>([]);
     const [isClassifying, setIsClassifying] = useState<boolean>(false);
-    const [currentClassification, setCurrentClassification] = useState<ExtractedFrame | null>(null);
+    const [currentClassification, setCurrentClassification] = useState<ClassificationJob | null>(null);
     const [apiError, setApiError] = useState<string | null>(null);
 
-    const addFramesToQueue = useCallback((frames: ExtractedFrame[]) => {
-        setApiError(null); // Clear previous errors when new frames are added
-        setQueue(prev => [...prev, ...frames]);
+    const addClassificationJobs = useCallback((jobs: ClassificationJob[]) => {
+        setApiError(null); // Clear previous errors when new jobs are added
+        setQueue(prev => [...prev, ...jobs]);
     }, []);
 
     useEffect(() => {
@@ -20,32 +26,34 @@ export const useClassificationQueue = () => {
         }
 
         const processNextFrame = async () => {
-            const frameToProcess = queue[0];
-            setCurrentClassification(frameToProcess);
+            const jobToProcess = queue[0];
+            setCurrentClassification(jobToProcess);
             setIsClassifying(true);
 
             try {
-                const classifications = await classifyImage(frameToProcess.data);
+                const classifications = await classifyImage(jobToProcess.src);
 
                 if (classifications) {
-                    const newImage: ReferenceImage = {
-                        id: crypto.randomUUID(),
-                        src: frameToProcess.data,
+                    const classifiedImage: ReferenceImage = {
+                        id: jobToProcess.id,
+                        src: jobToProcess.src,
                         classifications,
-                        timestamp: frameToProcess.timestamp,
-                        sourceName: frameToProcess.sourceName,
+                        timestamp: jobToProcess.timestamp,
+                        sourceName: jobToProcess.sourceName,
                     };
-                    setClassifiedImages(prev => [...prev, newImage]);
+                    onClassificationComplete(classifiedImage);
                 }
-                 // Successfully processed, remove from queue
+                // On success or if classification returns null, remove from queue
                 setQueue(prev => prev.slice(1));
 
             } catch (error) {
                 console.error("Failed to process frame:", error);
                 if (error instanceof Error && error.message.includes("Invalid API Key")) {
                     setApiError(error.message);
-                    // Stop the queue on API error
-                    setQueue([]);
+                    setQueue([]); // Stop the queue on API error
+                } else {
+                    // For other errors, skip the frame and continue
+                    setQueue(prev => prev.slice(1));
                 }
             } finally {
                 setCurrentClassification(null);
@@ -55,15 +63,13 @@ export const useClassificationQueue = () => {
 
         processNextFrame();
 
-    }, [queue, isClassifying]);
+    }, [queue, isClassifying, onClassificationComplete]);
 
     return {
-        addFramesToQueue,
-        classifiedImages,
+        addClassificationJobs,
         isClassifying,
         queueSize: queue.length,
         currentClassification,
-        setClassifiedImages,
         apiError,
     };
 };

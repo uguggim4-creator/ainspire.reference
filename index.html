@@ -6,11 +6,9 @@
     <title>AINSPIRE _ 레퍼런스 수집</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* HTML, BODY, #ROOT 높이 100% 설정 유지 */
       html, body, #root {
         height: 100%;
       }
-      /* 폰트나 기타 CSS 스타일은 여기에 추가 가능 */
     </style>
     <script>
       tailwind.config = {
@@ -30,25 +28,19 @@
         }
       }
     </script>
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://aistudiocdn.com/react@^19.1.1",
-        "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-        "react/": "https://aistudiocdn.com/react@^19.1.1/",
-        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0"
-      }
-    }
-    </script>
-  </head>
-  <body style="
-      background-image: url('background.jpg');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center;
-      background-attachment: fixed;
-  ">
-    <div id="root" class="p-4 sm:p-6 md:p-8"></div>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-white p-4 sm:p-6 md:p-8">
+    <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
